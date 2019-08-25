@@ -34,7 +34,10 @@ def hh_parse(base_url, headers):
             for div in divs:
                 title = div.find('a', attrs={'data-qa':"vacancy-serp__vacancy-title"}).text
                 href = div.find('a', attrs={'data-qa': "vacancy-serp__vacancy-title"})['href']
-                company = div.find('a', attrs={'data-qa': "vacancy-serp__vacancy-employer"}).text
+                try:
+                    company = div.find('a', attrs={'data-qa': "vacancy-serp__vacancy-employer"}).text
+                except:
+                    company = 'Not name'
                 try:
                     salary = div.find('div', attrs={'data-qa': "vacancy-serp__vacancy-compensation"}).text
                 except:
@@ -67,8 +70,9 @@ def hh_parse(base_url, headers):
         print('ERROR Done SC = ' + str(request.status_code))
     return (jobs)
 def writer_files(jobs):
-    with open('parsed_jobs_spb_python.csv', 'w', encoding="utf-8") as file:
+    with open('parsed_jobs_spb_python.csv', 'w', encoding="utf-8", newline="") as file:
         a_pen = csv.writer(file)
+        a_pen.writerow(('p_date', 'title', 'salary', 'company', 'premium', 'com_ver','href', 'content'))
         for job in jobs:
             a_pen.writerow((job['p_date'], job['title'], job['salary'], job['company'], job['premium'], job['com_ver'], job['href'], job['content']))
 

@@ -1,19 +1,32 @@
 import requests
+import csv
 from bs4 import BeautifulSoup as bs
-import  regex as re
 
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
 }
-base_url = 'https://spb.hh.ru/search/vacancy?only_with_salary=false&clusters=true&area=2&enable_snippets=falce&salary=&text=python'
+base_url = 'https://spb.hh.ru/search/vacancy?L_is_autosearch=false&area=2&clusters=true&enable_snippets=true&text=python&page=0'
 
 def hh_parse(base_url, headers):
     jobs = []
+    urls = []
+    urls.append(base_url)
     session = requests.Session()
     request = session.get(base_url, headers=headers)
     if request.status_code == 200:
-        soup = bs(request.content, 'html.parser')
+        soup = bs(request.content, 'lxml')
+        try:
+            pagination = soup.find_all('a', attrs={'data-qa':"pager-page"})
+            count = int(pagination[-1].text)
+            for i in range(count):
+                url = "https://spb.hh.ru/search/vacancy?L_is_autosearch=false&area=2&clusters=true&enable_snippets=true&text=python&page={}".format(i)
+                if url not in urls:
+                    urls.append(url)
+        except:
+            pass
+    for url in urls:
+        request = session.get(url, headers=headers)
         divs = soup.find_all('div', attrs={'data-qa':"vacancy-serp__vacancy"})
         divs_p = soup.find_all('div', attrs={'data-qa':'vacancy-serp__vacancy vacancy-serp__vacancy_premium'})
         def divs_find(divs, premium):
@@ -50,7 +63,16 @@ def hh_parse(base_url, headers):
         divs_find(divs_p, 'Yes')
         print(len(jobs))
     else:
-        print('ERROR')
+        print('ERROR Done SC = ' + str(request.status_code))
+    return (jobs)
+def writer_files(jobs):
+    with open('parsed_jobs_spb_python.csv', 'w', encoding="utf-8") as file:
+        a_pen = csv.writer(file)
+        a_pen.writerow({'Дата публикации', 'Название вакансии', 'Предложение', 'Компания', 'Есть премиум','Verification', 'URL', 'Content'})
+        for job in jobs:
+            a_pen.writerow((job['publick_date'],job['title'],job['salary'],job['company'],job['premium'],job['verif'],job['href'],job['content']))
 
-hh_parse(base_url, headers)
+
+jobs = hh_parse(base_url, headers)
+writer_files(jobs)
 

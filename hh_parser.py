@@ -27,6 +27,7 @@ def hh_parse(base_url, headers):
             pass
     for url in urls:
         request = session.get(url, headers=headers)
+        soup = bs(request.content, 'lxml')
         divs = soup.find_all('div', attrs={'data-qa':"vacancy-serp__vacancy"})
         divs_p = soup.find_all('div', attrs={'data-qa':'vacancy-serp__vacancy vacancy-serp__vacancy_premium'})
         def divs_find(divs, premium):
@@ -49,12 +50,12 @@ def hh_parse(base_url, headers):
                     verif = 'Not verification'
                 premium = premium
                 jobs.append({
-                    'publick_date': publick_date,
+                    'p_date': publick_date,
                     'title': title,
                     'salary': salary,
                     'company': company,
                     'premium': premium,
-                    'verif': verif,
+                    'com_ver': verif,
                     'href': href,
                     'content': content
                 })
@@ -68,9 +69,8 @@ def hh_parse(base_url, headers):
 def writer_files(jobs):
     with open('parsed_jobs_spb_python.csv', 'w', encoding="utf-8") as file:
         a_pen = csv.writer(file)
-        a_pen.writerow({'Дата публикации', 'Название вакансии', 'Предложение', 'Компания', 'Есть премиум','Verification', 'URL', 'Content'})
         for job in jobs:
-            a_pen.writerow((job['publick_date'],job['title'],job['salary'],job['company'],job['premium'],job['verif'],job['href'],job['content']))
+            a_pen.writerow((job['p_date'], job['title'], job['salary'], job['company'], job['premium'], job['com_ver'], job['href'], job['content']))
 
 
 jobs = hh_parse(base_url, headers)
